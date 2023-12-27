@@ -21,7 +21,7 @@ To run this application, you need to have the following installed:
 1. **Clone the Repository**: First, clone the repository to your local machine using Git.
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Luudeus/Sudoku-Puzzle.git
    ```
 
 2. **Navigate to the Project Directory**: Change your directory to the cloned project folder.
