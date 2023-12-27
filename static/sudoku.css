@@ -1,0 +1,315 @@
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    backdrop-filter: blur(8px); /* Blur effect for the background */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+.light-mode .modal-content {
+        background-color: #000;
+    }
+
+/* The Close Button */
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.light-mode .close-btn:hover,
+.close-btn:focus {
+    color: white;
+}
+
+/* Layout */
+.sudoku-container {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+}
+
+.mistakes-counter {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.light-mode .mistakes-counter {
+    color: #fff;
+}
+
+
+/* Sudoku grid styles */
+.sudoku-table {
+    width: 350px;
+    height: 350px;
+    margin: auto;
+    border-collapse: collapse;
+    border: 3px solid #000;
+    transition: width 0.3s; /* Smooth transition for responsive changes */
+}
+
+.sudoku-table td {
+    width: 11.11%;
+    height: 11.11%;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    font-size: 20px;
+    border: 1px solid #bfbfbf;
+    transition: font-size 0.3s; /* Smooth transition for font size changes */
+}
+
+/* Subgrid separation styles */
+.sudoku-table tr:nth-child(3n) td {
+    border-bottom: 3px solid #000;
+}
+
+.sudoku-table td:nth-child(3n) {
+    border-right: 3px solid #000;
+}
+
+/* Last row and column border adjustment */
+.sudoku-table tr:last-child td {
+    border-bottom: 1px solid #000;
+}
+
+.sudoku-table td:nth-child(9) {
+    border-right: 1px solid #000;
+}
+
+/* Number Buttons */
+.number-buttons {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+}
+
+.number-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+/* Typography */
+.sudoku-table td {
+    font-size: 20px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.num-btn {
+    font-size: 40px;
+    color: #000;
+    margin-right: 5px;
+}
+
+.btn-active {
+    background-color: #D3D3D3 !important;
+    color: #000;
+    border-color: #D3D3D3 !important;
+}
+
+/* Difficulty buttons style */
+.light-mode .btn-active {
+    background-color: #828282 !important;
+    color: #fff;
+    border-color: #828282 !important;
+}
+
+.highlighted {
+    background-color: #D3D3D3 !important;
+}
+
+.light-mode .highlighted {
+    background-color: #828282 !important;
+}
+
+/* Style the notes */
+.in-notes-mode {
+    /* Style for when a cell is in notes mode */
+    background-color: #ffffa0; /* Light yellow, for example */
+}
+
+/* Styles for the notes container */
+.notes {
+    position: absolute; /* Position the notes container absolutely within the cell */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Creates a 3x3 grid */
+    grid-template-rows: repeat(3, 1fr);
+    font-size: 8px;
+    text-align: center;
+    pointer-events: none; /* Ensures that clicks go through to the cell */
+}
+
+/* Styles for individual note items */
+.notes span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Colors & Borders */
+.sudoku-table td {
+    border: 1px solid #bfbfbf;
+    font-family: 'Montserrat', sans-serif;
+    position: relative;
+}
+
+.num-btn {
+    background-color: #f0f0f0;
+    color: #000;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.num-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.light-mode .num-btn {
+    background-color: #121212;
+    color: white;
+}
+
+.light-mode .num-btn:hover {
+    background-color: #828282;
+}
+
+.light-mode .num-btn:active {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.light-mode .sudoku-table {
+    border: 3px solid #ffffff;
+}
+
+.light-mode .sudoku-table tr:nth-child(3n) td {
+    border-bottom: 3px solid #ffffff;
+}
+
+.light-mode .sudoku-table td:nth-child(3n) {
+    border-right: 3px solid #ffffff;
+}
+
+.light-mode .sudoku-table td {
+    border: 1px solid #bfbfbf;
+}
+
+/* Style for numbers added by the user */
+.user-added-number {
+    color: #007bff;
+}
+
+.light-mode .user-added-number {
+    color: #31acff;
+}
+
+/* Style for invalid numbers */
+.invalid-number {
+    color: #ff3222;
+}
+
+/* Button Styles */
+.num-btn {
+    width: 82px;
+    height: 82px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Remove margin from the last button in each row */
+.number-row .num-btn:last-child {
+    margin-right: 0;
+}
+
+/* Hover effect */
+.num-btn:hover {
+    background-color: #e0e0e0;
+}
+
+/* States and Interactions */
+.num-btn:active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+    .centered-grid {
+        display: block;
+        padding: 10px;
+    }
+
+    .sudoku-table {
+        width: 90vw;
+        max-width: 350px;
+        margin: 10px auto;
+        border: 2px solid #000;
+    }
+
+    .sudoku-table td {
+        font-size: 5vw;
+        max-font-size: 18px;
+    }
+
+    .sudoku-table td::before {
+        padding-top: 100%;
+    }
+
+    .sudoku-table td::after {
+        font-size: 5vw;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .sudoku-container {
+        flex-direction: column;
+    }
+
+    .number-buttons {
+        margin-left: 0;
+        margin-top: 20px;
+        align-self: center;
+    }
+}

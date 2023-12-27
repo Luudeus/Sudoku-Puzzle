@@ -1,0 +1,441 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Sudoku Game
+{% endblock %}
+
+{% block main %}
+
+    <!-- Congratulations Modal -->
+    <div id="congrats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCongratsModal()"><i class="bi bi-x"></i></span>
+            <h2>Congratulations!</h2>
+            <p>You have successfully completed the Sudoku puzzle!</p>
+            <p><strong>Points earned: <span id="win-points-label">0</span></strong> <strong>Total points: <span id="player-points-label">0</span></strong></p>
+            <p>Start a new game:</p>
+            <!-- Sudoku Difficulty Selection Form -->
+            <form id="win-new-game-difficulty-form" action="/sudoku" method="post">
+                <button id="win-new-game-easy-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="easy">Easy</button>
+                <button id="win-new-game-medium-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="medium">Medium</button>
+                <button id="win-new-game-hard-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="hard">Hard</button>
+                <button id="win-new-game-expert-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="expert">Expert</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Game over hidden modal for difficulty selection -->
+    <div id="difficulty-modal" class="modal">
+        <div class="modal-content">
+            <span><strong>Game Over!</strong></span>
+            <span>You've made <strong>3</strong> mistakes</span>
+            <span style="margin-bottom: 5px;">Start a new game:</span>
+            <!-- Sudoku Difficulty Selection Form -->
+            <form id="lose-new-game-difficulty-form" action="/sudoku" method="post">
+                <button id="lose-new-game-easy-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="easy">Easy</button>
+                <button id="lose-new-game-medium-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="medium">Medium</button>
+                <button id="new-game-hard-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="hard">Hard</button>
+                <button id="lose-new-game-expert-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="expert">Expert</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sudoku Difficulty Selection Form -->
+    <form id="difficulty-form" action="/sudoku" method="post">
+        <button id="easy-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="easy">Easy</button>
+        <button id="medium-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="medium">Medium</button>
+        <button id="hard-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="hard">Hard</button>
+        <button id="expert-btn" class="btn btn-primary difficulty-btn" type="submit" name="difficulty" value="expert">Expert</button>
+    </form>
+
+    <!-- Counters -->
+    <div class="mistakes-counter">
+        Mistakes: <span id="mistakes-label">0/3</span> Win Points: <span id="points-label">0</span>
+    </div>
+
+    <div class="sudoku-container">
+        <div class="centered-grid">
+            <table class="sudoku-table">
+                <tbody>
+                {% for row_index in range(cleared_sudoku|length) %}
+                    <tr>
+                        {% for col_index in range(cleared_sudoku[row_index]|length) %}
+                            <td onclick="cellClicked(this)"
+                                data-row="{{ row_index }}"
+                                data-col="{{ col_index }}"
+                                {% if cleared_sudoku[row_index][col_index] != 0 %}data-initial="true"{% endif %}>
+                                {{ cleared_sudoku[row_index][col_index] if cleared_sudoku[row_index][col_index] != 0 }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="number-buttons">
+            {% for i in range(1, 10, 3) %}
+                <div class="number-row">
+                    {% for j in range(i, i+3) %}
+                        <button class="btn num-btn" onclick="numberClicked({{ j }})">{{ j }}</button>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <table>
+                <tr>
+                    <td>
+                        <!-- Undo Button -->
+                        <button id="undo-btn" class="btn btn-dark" type="button" onclick="undo()">
+                            <i class="bi bi-arrow-counterclockwise"> Undo</i>
+                        </button>
+                        <!-- Erase Button -->
+                        <button id="erase-btn" class="btn btn-dark" onclick="eraseNumber()">
+                            <i class="bi bi-trash-fill"> Erase</i>
+                        </button>
+                        <!-- Notes Button -->
+                        <button id="notes-btn" class="btn btn-dark">
+                            <i class="bi bi-pen-fill"> Notes</i>
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <!-- New Game Button -->
+                        <button id="new-game-btn" class="btn btn-dark">
+                            <i class="bi bi-pen-fill">New Game</i>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Listen for the 'New Game' button click
+        document.getElementById('new-game-btn').addEventListener('click', function() {
+            // Find the active difficulty button
+            var activeDifficultyBtn = document.querySelector('.difficulty-btn.btn-active');
+
+            // If an active difficulty button is found, simulate a click on it
+            if (activeDifficultyBtn) {
+                activeDifficultyBtn.click();
+            }
+        });
+    </script>
+    <script>
+        var difficulty = localStorage.getItem('selectedDifficulty');
+        var points;
+        switch (difficulty) {
+            case "easy":
+                points = '10';
+                break;
+            case "medium":
+                points = '25';
+                break;
+            case "hard":
+                points = '50';
+                break;
+            case "expert":
+                points = '100';
+                break;
+            default:
+                points = '10';
+        }
+        document.getElementById('points-label').textContent = points;
+        document.getElementById('win-points-label').textContent = points;
+    </script>
+
+    <script>
+        // Global Variables
+        var selectedCell = null; // The currently selected cell
+        var solvedSudoku; // The solved Sudoku puzzle
+        var actionStack = []; // Stack to keep track of actions for undo
+        var notesMode = false; // Variable to track whether notes mode is active
+        var mistakes = 0; // Number of mistakes made
+        var maxMistakes = 3; // Maximum allowed mistakes
+
+        // Function to get the current Sudoku grid from the HTML table
+        function getCurrentSudokuArray() {
+            let currentSudoku = [];
+            for (let i = 0; i < 9; i++) { // Assuming a 9x9 grid
+                let currentRow = [];
+                for (let j = 0; j < 9; j++) {
+                    let cellValue = document.querySelector(`.sudoku-table td[data-row="${i}"][data-col="${j}"]`).textContent;
+                    currentRow.push(cellValue ? parseInt(cellValue) : 0); // Replace empty strings with 0 or the actual number
+                }
+                currentSudoku.push(currentRow);
+            }
+            return currentSudoku;
+        }
+
+        // Function to compare the current Sudoku grid with the solved one
+        function compareSudokuGrids() {
+            const currentSudoku = getCurrentSudokuArray();
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (currentSudoku[i][j] !== solvedSudoku[i][j]) {
+                        console.log(`Mismatch at row ${i}, col ${j}: Expected ${solvedSudoku[i][j]}, but found ${currentSudoku[i][j]}`);
+                        return false; // Found a mismatch
+                    }
+                }
+            }
+            return true; // No mismatches found
+        }
+
+        // Use this in your checkGridCompletion function
+        function checkGridCompletion() {
+            if (compareSudokuGrids()) {
+                console.log("grid completed :)");
+                showCongratsModal();
+            } else {
+                console.log("grid not completed :(");
+            }
+        }
+
+
+        function showCongratsModal() {
+            var modal = document.getElementById('congrats-modal');
+            modal.style.display = 'block';
+
+            var points = parseInt(document.getElementById('win-points-label').textContent);
+
+            // Send points to backend
+            fetch('/add-points', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ points: points })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+
+        // Function to close the congratulations modal
+        var closeBtn = document.getElementsByClassName('close-btn')[0];
+        closeBtn.onclick = function closeCongratsModal() {
+            var modal = document.getElementById('congrats-modal');
+            modal.style.display = 'none';
+        }
+
+        // Function to increment the mistakes count and show modal if maxMistakes is reached
+        function incrementMistakes() {
+            if (mistakes < maxMistakes) {
+                mistakes++;
+                document.getElementById('mistakes-label').textContent = mistakes + '/' + maxMistakes;
+                if (mistakes >= 3) {
+                    // Show the modal for game over
+                    var modal = document.getElementById('difficulty-modal');
+                    modal.style.display = 'block';
+                }
+            }
+        }
+
+        // Event listener for when the page is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if the grid is not populated, indicating a GET request
+            if (!{{ grid_populated | tojson }}) {
+                // Simulate a click on the 'Easy' button to start a game
+                document.getElementById('easy-btn').click();
+            }
+        });
+
+        // Event listener for when the page is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse the solved Sudoku puzzle from the template
+            solvedSudoku = JSON.parse('{{ solved_sudoku | safe }}');
+            var gridPopulated = {{ grid_populated | tojson }};
+
+            // Log the parsed solved Sudoku to the browser's console
+            console.log("Parsed solved Sudoku: ", solvedSudoku);
+
+            if (gridPopulated) {
+                // Check if there is a selected difficulty stored in local storage
+                var selectedDifficulty = localStorage.getItem('selectedDifficulty');
+                if (selectedDifficulty) {
+                    // Add the 'btn-active' class to the selected difficulty button
+                    var button = document.getElementById(selectedDifficulty + '-btn');
+                    if (button) {
+                        button.classList.add('btn-active');
+                    }
+                }
+            }
+        });
+
+        // Function to handle cell clicks
+        function cellClicked(cell) {
+            if (cell.classList.contains('highlighted')) {
+                // If the cell is already highlighted, remove the highlight
+                cell.classList.remove('highlighted');
+                selectedCell = null;
+            } else {
+                // If the cell isn't highlighted, remove highlights from all cells,
+                // then highlight the current cell and set selectedCell to it
+                var cells = document.querySelectorAll('.sudoku-table td');
+                cells.forEach(function(c) {
+                    c.classList.remove('highlighted');
+                });
+                cell.classList.add('highlighted');
+                selectedCell = cell;
+            }
+        }
+
+        // Function to handle number button clicks
+        function numberClicked(num) {
+            if (selectedCell && !selectedCell.hasAttribute('data-initial')) {
+                let row = parseInt(selectedCell.getAttribute('data-row'));
+                let col = parseInt(selectedCell.getAttribute('data-col'));
+
+                if (isNaN(row) || isNaN(col)) {
+                    console.error('The row or column is not a number');
+                    return; // Stop the function if row or col isn't a number
+                }
+
+                if (notesMode) {
+                    // Handle adding/removing notes if notes mode is active
+                    actionStack.push({
+                        type: 'note',
+                        cell: selectedCell,
+                        notes: selectedCell.getAttribute('data-notes'),
+                        ...(selectedCell.classList.contains('user-added-number') || selectedCell.classList.contains('invalid-number') ? {
+                            value: selectedCell.textContent,
+                            isCorrect: selectedCell.classList.contains('user-added-number'),
+                        } : {})
+                    });
+                    selectedCell.textContent = '';
+                    selectedCell.classList.remove('user-added-number', 'invalid-number');
+                    var notes = selectedCell.getAttribute('data-notes') ? selectedCell.getAttribute('data-notes').split(',') : [];
+                    var noteIndex = notes.indexOf(num.toString());
+                    if (noteIndex === -1) {
+                        notes.push(num);
+                    } else {
+                        notes.splice(noteIndex, 1);
+                    }
+                    selectedCell.setAttribute('data-notes', notes.sort().join(','));
+                    updateNotesDisplay(selectedCell);
+                } else {
+                    // Handle adding/removing numbers
+                    actionStack.push({
+                        type: 'number',
+                        cell: selectedCell,
+                        value: selectedCell.textContent,
+                        isCorrect: selectedCell.classList.contains('user-added-number'),
+                        notes: selectedCell.getAttribute('data-notes')
+                    });
+                    selectedCell.setAttribute('data-notes', '');
+                    clearNotesDisplay(selectedCell);
+                    const isCorrect = solvedSudoku[row][col] == num;
+                    selectedCell.textContent = num;
+                    selectedCell.classList.remove('user-added-number', 'invalid-number');
+                    if (isCorrect) {
+                        checkGridCompletion()
+                        selectedCell.classList.add('user-added-number');
+                    } else {
+                        incrementMistakes();
+                        selectedCell.classList.add('invalid-number');
+                    }
+                }
+            }
+        }
+
+        // Function to clear notes display in a cell
+        function clearNotesDisplay(cell) {
+            var notesElement = cell.querySelector('.notes');
+            if (notesElement) {
+                notesElement.remove();
+            }
+        }
+
+        // Function to undo the last action
+        function undo() {
+            var lastAction = actionStack.pop();
+            if (lastAction) {
+                if (lastAction.type === 'number') {
+                    lastAction.cell.classList.remove('user-added-number', 'invalid-number');
+                    if (!lastAction.notes) {
+                        lastAction.notes = '';
+                        lastAction.cell.textContent = lastAction.value || '';
+                        if (lastAction.isCorrect) {
+                            lastAction.cell.classList.add('user-added-number');
+                        } else {
+                            lastAction.cell.classList.add('invalid-number');
+                        }
+                    } else {
+                        lastAction.cell.textContent = '';
+                        lastAction.cell.setAttribute('data-notes', lastAction.notes || '');
+                        updateNotesDisplay(lastAction.cell);
+                    }
+                }
+                if (lastAction.type === 'note') {
+                    if (!lastAction.value) {
+                        lastAction.cell.setAttribute('data-notes', lastAction.notes || '');
+                        updateNotesDisplay(lastAction.cell);
+                    } else {
+                        lastAction.cell.textContent = lastAction.value || '';
+                        if (lastAction.isCorrect) {
+                            lastAction.cell.classList.add('user-added-number');
+                        } else {
+                            lastAction.cell.classList.add('invalid-number');
+                        }
+                    }
+                }
+                if (selectedCell) {
+                    selectedCell.classList.remove('highlighted');
+                }
+                selectedCell = null;
+            }
+        }
+
+        // Function to erase a number from the selected cell
+        function eraseNumber() {
+            if (selectedCell && !selectedCell.hasAttribute('data-initial')) {
+                selectedCell.textContent = '';
+                selectedCell.classList.remove('user-added-number', 'invalid-number');
+                selectedCell.classList.remove('highlighted');
+                selectedCell.setAttribute('data-notes', '');
+                clearNotesDisplay(selectedCell);
+                selectedCell = null;
+            }
+        }
+
+        // Function to update the display of notes in a cell
+        function updateNotesDisplay(cell) {
+            var notes = cell.getAttribute('data-notes') ? cell.getAttribute('data-notes').split(',') : [];
+            var notesElement = cell.querySelector('.notes');
+            if (notesElement) {
+                notesElement.remove();
+            }
+            notesElement = document.createElement('div');
+            notesElement.className = 'notes';
+            for (var i = 1; i <= 9; i++) {
+                var noteSpan = document.createElement('span');
+                noteSpan.textContent = notes.includes(i.toString()) ? i : '';
+                notesElement.appendChild(noteSpan);
+            }
+            cell.appendChild(notesElement);
+        }
+
+        // Function to toggle notes mode
+        function toggleNotesMode() {
+            notesMode = !notesMode;
+            document.getElementById('notes-btn').classList.toggle('btn-active', notesMode);
+        }
+
+        // Event listener for the 'Notes' button
+        document.getElementById('notes-btn').addEventListener('click', toggleNotesMode);
+
+        // Event listener for difficulty buttons to store selected difficulty in local storage
+        document.querySelectorAll('.difficulty-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                localStorage.setItem('selectedDifficulty', button.value);
+            });
+        });
+    </script>
+
+{% endblock %}

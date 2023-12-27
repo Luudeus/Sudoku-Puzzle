@@ -1,0 +1,53 @@
+/* Base layout styles */
+.centered-grid,
+.centered-switch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Image container and hover styles */
+.image-container .hover-image {
+    width: 150px;
+    height: auto;
+    margin: 10px;
+    transition: transform 0.3s ease;
+}
+
+.image-container .hover-image:hover {
+    transform: scale(1.2);
+}
+
+/* Light theme transition styles */
+body,
+nav.navbar {
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Light mode specific styles */
+body.light-mode {
+    background-color: #090909;
+    color: white;
+}
+
+/* Custom color for text in footer for light mode */
+body.light-mode footer .form-check-label,
+body.light-mode footer .text-muted,
+body.light-mode footer {
+    color: white !important;
+}
+
+/* Change navbar background and text color for light mode */
+.light-mode nav.navbar,
+.light-mode nav .navbar-brand,
+.light-mode nav .navbar-nav .nav-link {
+    background-color: #121212 !important;
+    color: white !important;
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+    .image-container {
+        flex-direction: column;
+    }
+}
